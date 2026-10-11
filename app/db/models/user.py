@@ -19,7 +19,6 @@ class User(Base):
         CheckConstraint("birth_date <= CURRENT_DATE", name="birth_date_not_in_future"),
     )
 
-    # UUIDs don't reveal how many users exist and can't be guessed from another id.
     user_id: Mapped[uuid.UUID] = mapped_column(
         Uuid,
         primary_key=True,

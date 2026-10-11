@@ -27,7 +27,6 @@ class Asset(Base):
     )
     name: Mapped[str] = mapped_column(String(200))
     description: Mapped[str | None] = mapped_column(Text)
-    # Optional: fixed deposits, savings and many bonds have no ticker or exchange.
     ticker: Mapped[str | None] = mapped_column(String(20))
     exchange: Mapped[str | None] = mapped_column(String(20))
 

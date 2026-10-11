@@ -22,7 +22,6 @@ from app.db.base import Base
 if TYPE_CHECKING:
     from app.db.models.assets import Asset
 
-# Enough precision for fractional shares, crypto-style quantities and grams of gold.
 MONEY = Numeric(20, 8)
 
 
@@ -47,10 +46,7 @@ class Transaction(Base):
         ForeignKey("folio_assets.asset_id", ondelete="RESTRICT"),
         index=True,
     )
-    # When the trade happened, stored in UTC. Set it explicitly; trades are often entered later.
     timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
-    # Stored as VARCHAR + CHECK rather than a native Postgres enum, so adding new sides
-    # later (e.g. dividend, split) is a simple migration.
     transaction_side: Mapped[TransactionSide] = mapped_column(
         Enum(
             TransactionSide,
@@ -64,8 +60,6 @@ class Transaction(Base):
     quantity: Mapped[Decimal] = mapped_column(MONEY)
     price_per_count: Mapped[Decimal] = mapped_column(MONEY)
     commission: Mapped[Decimal] = mapped_column(MONEY, default=Decimal("0"), server_default="0")
-    # Calculated by Postgres so it can never disagree with the other columns.
-    # Buys cost price + commission; sells return price - commission.
     total_price: Mapped[Decimal] = mapped_column(
         MONEY,
         Computed(
