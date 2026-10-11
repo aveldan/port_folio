@@ -21,3 +21,15 @@ dependencies = [
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+# Lets tests import the app package without setting PYTHONPATH.
+pythonpath = ["."]
+testpaths = ["tests"]
+# Test files are named like testProfiles.py rather than pytest's default test_*.py.
+python_files = ["test*.py"]
+
+[dependency-groups]
+dev = [
+    "pytest (>=9.1.1,<10.0.0)"
+]
