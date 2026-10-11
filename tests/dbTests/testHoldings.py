@@ -23,8 +23,8 @@ LAST_TS = datetime(2026, 10, 1, 14, 30, tzinfo=timezone.utc)
 async def setup(db: AsyncSession) -> SimpleNamespace:
     """A user with a Brokerage and a Roth IRA account, and two ETFs to hold."""
     user = User(full_name="Test User")
-    brokerage = Account(user=user, account_name="Brokerage")
-    ira = Account(user=user, account_name="Roth IRA")
+    brokerage = Account(users=[user], account_name="Brokerage")
+    ira = Account(users=[user], account_name="Roth IRA")
     etf = AssetType(name="ETF")
     voo = Asset(name="Vanguard S&P 500", ticker="VOO", exchange="NYSEARCA", asset_type=etf)
     qqq = Asset(name="Invesco QQQ", ticker="QQQ", exchange="NASDAQ", asset_type=etf)

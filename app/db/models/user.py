@@ -6,6 +6,7 @@ from sqlalchemy import CheckConstraint, Date, String, Text, Uuid, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
 from app.db.base import Base
+from app.db.models.accountUser import account_users
 
 if TYPE_CHECKING:
     from app.db.models.account import Account
@@ -34,7 +35,9 @@ class User(Base):
     profiles: Mapped[list["Profile"]] = relationship(
         back_populates="user", lazy="raise", passive_deletes=True
     )
-    accounts: Mapped[list["Account"]] = relationship(back_populates="user", lazy="raise")
+    accounts: Mapped[list["Account"]] = relationship(
+        secondary=account_users, back_populates="users", lazy="raise"
+    )
 
     @validates("email")
     def _normalize_email(self, key: str, value: str | None) -> str | None:

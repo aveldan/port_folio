@@ -47,7 +47,8 @@ All tables use the `folio_` prefix. Models live in `app/db/models/` and are defi
 |---|---|
 | `folio_users` | A person using the app: name, birth date, avatar and email. |
 | `folio_profiles` | A way for a user to log in, such as a username and password or a Google account. A user can have several, one for each way they log in. Profiles hold no financial data. |
-| `folio_accounts` | A named bucket of a user's money, such as a brokerage account or a retirement account. A user can have many accounts. |
+| `folio_accounts` | A named bucket of money, such as a brokerage account or a retirement account. An account can be held by several users, such as a joint account, and a user can hold many accounts. |
+| `folio_account_users` | Links users to the accounts they hold, with the time each user was added. A user can be on an account only once. |
 | `folio_asset_types` | Reference list of asset categories, such as ETF, Stock, Commodity, Bond or Cash. |
 | `folio_assets` | Individual instruments, such as an ETF on a given exchange or a fixed deposit. Ticker and exchange are optional. Each asset also stores its last known market price and when that price was quoted. |
 | `folio_transactions` | Each buy or sell of an asset within an account: quantity, price, commission and timestamp. The total price is calculated by Postgres. |
@@ -55,10 +56,13 @@ All tables use the `folio_` prefix. Models live in `app/db/models/` and are defi
 
 Money and quantities use exact decimal types throughout, never floating point. Prices and quantities are stored with up to 8 decimal places.
 
+Deleting an account removes its links to users. A user who is still on any account can't be deleted until they are removed from it.
+
 ```mermaid
 erDiagram
     folio_users ||--o{ folio_profiles : "logs in with"
-    folio_users ||--o{ folio_accounts : owns
+    folio_users ||--o{ folio_account_users : holds
+    folio_accounts ||--o{ folio_account_users : "held by"
     folio_asset_types ||--o{ folio_assets : groups
     folio_accounts ||--o{ folio_transactions : records
     folio_assets ||--o{ folio_transactions : "traded in"
@@ -78,7 +82,7 @@ erDiagram
 
 | Part | Status |
 |---|---|
-| Database models | Users, profiles, accounts, asset types, assets with market prices, transactions and holdings are done, with tests. |
+| Database models | Users, profiles, shared accounts, asset types, assets with market prices, transactions and holdings are done, with tests. |
 | Database migrations | Not set up yet. |
 | Holding recalculation | Not started. Nothing updates a holding when a transaction is saved yet. |
 | Price ingestion worker | Not started. |
