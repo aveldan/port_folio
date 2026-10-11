@@ -1,13 +1,29 @@
+from datetime import datetime
+from decimal import Decimal
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey, Identity, Integer, SmallInteger, String, Text, UniqueConstraint
+from sqlalchemy import (
+    CheckConstraint,
+    DateTime,
+    ForeignKey,
+    Identity,
+    Integer,
+    Numeric,
+    SmallInteger,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 
 if TYPE_CHECKING:
     from app.db.models.assetTypes import AssetType
+    from app.db.models.holding import Holding
     from app.db.models.transaction import Transaction
+
+MONEY = Numeric(20, 8)
 
 
 class Asset(Base):
@@ -15,8 +31,12 @@ class Asset(Base):
 
     __tablename__ = "folio_assets"
     __table_args__ = (
-        # The same ticker can be listed on several exchanges, so uniqueness is on the pair.
         UniqueConstraint("ticker", "exchange", name="uq_folio_assets_ticker_exchange"),
+        CheckConstraint("market_price >= 0", name="market_price_non_negative"),
+        CheckConstraint(
+            "(market_price IS NULL) = (market_price_update_timestamp IS NULL)",
+            name="market_price_has_timestamp",
+        ),
     )
 
     asset_id: Mapped[int] = mapped_column(Integer, Identity(), primary_key=True)
@@ -29,11 +49,14 @@ class Asset(Base):
     description: Mapped[str | None] = mapped_column(Text)
     ticker: Mapped[str | None] = mapped_column(String(20))
     exchange: Mapped[str | None] = mapped_column(String(20))
+    market_price: Mapped[Decimal | None] = mapped_column(MONEY)
+    market_price_update_timestamp: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     asset_type: Mapped["AssetType"] = relationship(back_populates="assets", lazy="raise")
     transactions: Mapped[list["Transaction"]] = relationship(
         back_populates="asset", lazy="raise"
     )
+    holdings: Mapped[list["Holding"]] = relationship(back_populates="asset", lazy="raise")
 
     def __repr__(self) -> str:
         return f"Asset(asset_id={self.asset_id!r}, name={self.name!r}, ticker={self.ticker!r})"

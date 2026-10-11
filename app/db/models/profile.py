@@ -28,13 +28,13 @@ class AuthProvider(str, enum.Enum):
 
 
 class Profile(Base):
-    """A separate space for a user's funds, each with its own login. A user can have many."""
+    """One way for a user to log in, e.g. username/password or Google. A user can have many."""
 
     __tablename__ = "folio_profiles"
     __table_args__ = (
         UniqueConstraint("profile_id", "user_id", name="uq_folio_profiles_profile_id_user_id"),
-        # A login identifier is unique per provider: username "bob" and a Google id can't clash.
         UniqueConstraint("provider", "identifier", name="uq_folio_profiles_provider_identifier"),
+        UniqueConstraint("user_id", "provider", name="uq_folio_profiles_user_id_provider"),
         # Password logins must have a hash; other providers authenticate elsewhere.
         CheckConstraint(
             "provider <> 'password' OR secret IS NOT NULL",
