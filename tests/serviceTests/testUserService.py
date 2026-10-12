@@ -6,9 +6,10 @@ import pytest
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 
+from app.core.security import password_hash
 from app.db.models import AuthProvider, Profile, User
 from app.schemas.requestDTOs.user import UserCreateRequest
-from app.services.userService import UserService, password_hash
+from app.services.userService import UserService
 
 pytestmark = pytest.mark.anyio
 

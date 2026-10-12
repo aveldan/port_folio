@@ -4,6 +4,7 @@ from app.db.models.assets import Asset
 from app.db.models.assetTypes import AssetType
 from app.db.models.holding import Holding
 from app.db.models.profile import AuthProvider, Profile
+from app.db.models.authSessions import AuthSession
 from app.db.models.transaction import Transaction, TransactionSide
 from app.db.models.user import User
 
@@ -12,6 +13,7 @@ __all__ = [
     "Asset",
     "AssetType",
     "AuthProvider",
+    "AuthSession",
     "Holding",
     "Profile",
     "Transaction",

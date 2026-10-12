@@ -11,6 +11,7 @@ from app.db.models.accountUser import account_users
 if TYPE_CHECKING:
     from app.db.models.account import Account
     from app.db.models.profile import Profile
+    from app.db.models.authSessions import AuthSession
 
 
 class User(Base):
@@ -37,6 +38,9 @@ class User(Base):
     )
     accounts: Mapped[list["Account"]] = relationship(
         secondary=account_users, back_populates="users", lazy="raise"
+    )
+    sessions: Mapped[list["AuthSession"]] = relationship(
+        back_populates="user", lazy="raise", passive_deletes=True
     )
 
     @validates("email")
