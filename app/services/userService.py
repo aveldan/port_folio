@@ -1,14 +1,9 @@
-import asyncio
-
-from pwdlib import PasswordHash
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.security import hash_password
 from app.db.models import AuthProvider, Profile, User
 from app.schemas.requestDTOs.user import UserCreateRequest
-
-# Argon2 with pwdlib's recommended parameters.
-password_hash = PasswordHash.recommended()
 
 
 class UserService:
@@ -21,7 +16,7 @@ class UserService:
         Raises IntegrityError if the email or user name is already taken; the API's
         exception handler turns that into a 409.
         """
-        hashed = await asyncio.to_thread(password_hash.hash, request.password.get_secret_value())
+        hashed = await hash_password(request.password.get_secret_value())
 
         user = User(
             full_name=request.full_name,

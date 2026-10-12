@@ -19,6 +19,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 from app.db.base import Base
 
 if TYPE_CHECKING:
+    from app.db.models.authSessions import AuthSession
     from app.db.models.user import User
 
 
@@ -74,6 +75,9 @@ class Profile(Base):
     last_login_timestamp: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     user: Mapped["User"] = relationship(back_populates="profiles", lazy="raise")
+    sessions: Mapped[list["AuthSession"]] = relationship(
+        back_populates="profile", lazy="raise", passive_deletes=True, overlaps="sessions,user"
+    )
 
     @validates("identifier")
     def _normalize_identifier(self, key: str, value: str) -> str:
