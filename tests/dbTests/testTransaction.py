@@ -21,7 +21,7 @@ TS = datetime(2026, 10, 1, 14, 30, tzinfo=timezone.utc)
 async def setup(db: AsyncSession) -> SimpleNamespace:
     """A user with one account, and one ETF to trade."""
     user = User(full_name="Test User")
-    account = Account(user=user, account_name="Brokerage")
+    account = Account(users=[user], account_name="Brokerage")
     voo = Asset(name="Vanguard S&P 500", ticker="VOO", exchange="NYSEARCA", asset_type=AssetType(name="ETF"))
     db.add_all([user, account, voo])
     await db.flush()

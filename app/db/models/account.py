@@ -2,10 +2,11 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, String, UniqueConstraint, Uuid, func, text
+from sqlalchemy import DateTime, String, Uuid, func, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+from app.db.models.accountUser import account_users
 
 if TYPE_CHECKING:
     from app.db.models.holding import Holding
@@ -14,12 +15,12 @@ if TYPE_CHECKING:
 
 
 class Account(Base):
-    """A named bucket of a user's money, e.g. "Brokerage", "Roth IRA", "Emergency savings"."""
+    """A named bucket of money, e.g. "Brokerage", "Roth IRA", "Emergency savings".
+
+    An account can be held by several users, e.g. a joint account.
+    """
 
     __tablename__ = "folio_accounts"
-    __table_args__ = (
-        UniqueConstraint("user_id", "account_name", name="uq_folio_accounts_user_id_account_name"),
-    )
 
     account_id: Mapped[uuid.UUID] = mapped_column(
         Uuid,
@@ -27,17 +28,14 @@ class Account(Base):
         default=uuid.uuid4,
         server_default=text("gen_random_uuid()"),
     )
-    user_id: Mapped[uuid.UUID] = mapped_column(
-        Uuid,
-        ForeignKey("folio_users.user_id", ondelete="RESTRICT"),
-        index=True,
-    )
     account_name: Mapped[str] = mapped_column(String(100))
     created_timestamp: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
 
-    user: Mapped["User"] = relationship(back_populates="accounts", lazy="raise")
+    users: Mapped[list["User"]] = relationship(
+        secondary=account_users, back_populates="accounts", lazy="raise", passive_deletes=True
+    )
     transactions: Mapped[list["Transaction"]] = relationship(
         back_populates="account", lazy="raise"
     )

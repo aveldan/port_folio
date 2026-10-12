@@ -79,8 +79,8 @@ def rejected_by(db: AsyncSession):
     """Assert that the database rejects whatever the block adds or executes.
 
     Usage:
-        async with rejected_by("uq_folio_accounts_user_id_account_name"):
-            db.add(Account(...))
+        async with rejected_by("ck_folio_holdings_quantity_non_negative"):
+            db.add(Holding(...))
 
     The block runs in a savepoint and is flushed at the end. The test fails unless
     Postgres raises an IntegrityError whose message mentions `expected`, which is

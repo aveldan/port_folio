@@ -1,4 +1,5 @@
 from app.db.models.account import Account
+from app.db.models.accountUser import account_users
 from app.db.models.assets import Asset
 from app.db.models.assetTypes import AssetType
 from app.db.models.holding import Holding
@@ -16,4 +17,5 @@ __all__ = [
     "Transaction",
     "TransactionSide",
     "User",
+    "account_users",
 ]

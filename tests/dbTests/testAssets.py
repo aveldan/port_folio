@@ -161,8 +161,8 @@ async def test_timestamp_keeps_the_same_instant_across_timezones(db, etf):
 
 async def test_one_price_values_holdings_in_every_account(db, etf):
     user = User(full_name="Test User")
-    brokerage = Account(user=user, account_name="Brokerage")
-    ira = Account(user=user, account_name="Roth IRA")
+    brokerage = Account(users=[user], account_name="Brokerage")
+    ira = Account(users=[user], account_name="Roth IRA")
     asset = _voo(etf, market_price=Decimal("520.25"), market_price_update_timestamp=PRICE_TS)
     db.add_all([user, brokerage, ira, asset])
     await db.flush()
