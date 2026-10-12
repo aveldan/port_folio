@@ -1,7 +1,14 @@
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from app.core.security import hash_password
+from app.core.security import (
+    AuthenticationCreds,
+    InvalidCredentialsError,
+    authenticate_access_token,
+    hash_password,
+)
 from app.db.models import AuthProvider, Profile, User
 from app.schemas.requestDTOs.user import UserCreateRequest
 
@@ -31,4 +38,16 @@ class UserService:
             await self.session.rollback()
             raise
         await self.session.refresh(user)
+        return user
+
+    async def get_current_user(self, token: str) -> User:
+        """Return the user the access token belongs to."""
+        user_creds: AuthenticationCreds = authenticate_access_token(token)
+        user = await self.session.scalar(
+            select(User)
+            .where(User.user_id == user_creds.user_id)
+            .options(selectinload(User.accounts))
+        )
+        if user is None:
+            raise InvalidCredentialsError()
         return user

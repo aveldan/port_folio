@@ -3,12 +3,14 @@
 import uuid
 
 import pytest
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.exc import IntegrityError
 
-from app.core.security import password_hash
+from app.core.security import InvalidCredentialsError, generate_access_token, password_hash
 from app.db.models import AuthProvider, Profile, User
+from app.schemas.requestDTOs.loginPwd import LoginPwdRequest
 from app.schemas.requestDTOs.user import UserCreateRequest
+from app.services.authenticationService import AuthenticationService
 from app.services.userService import UserService
 
 pytestmark = pytest.mark.anyio
@@ -73,3 +75,40 @@ async def test_session_is_usable_after_a_failed_create(db):
         await service.create_user(_request(user_name="someone.else"))
     other = await service.create_user(_request(email="other@example.com", user_name="other"))
     assert other.user_id is not None
+
+
+# Current user from an access token
+
+
+@pytest.fixture
+async def jane_token(db) -> str:
+    await UserService(db).create_user(_request())
+    tokens = await AuthenticationService(db).login_user_pwd(LoginPwdRequest(user_name="jane.doe", password=PASSWORD))
+    return tokens.access_token
+
+
+async def test_get_current_user_loads_the_tokens_user(db, jane_token):
+    user = await UserService(db).get_current_user(jane_token)
+    assert user.email == "jane@example.com"
+    assert user.accounts == []  # loaded eagerly, so reading it doesn't raise
+
+
+async def test_get_current_user_rejects_deleted_user(db, jane_token):
+    await db.execute(delete(User))
+    with pytest.raises(InvalidCredentialsError):
+        await UserService(db).get_current_user(jane_token)
+
+
+async def test_get_current_user_rejects_expired_token(db):
+    user = await UserService(db).create_user(_request())
+    token = generate_access_token(
+        {"sub": str(user.user_id), "profile_id": str(uuid.uuid4()), "session_id": str(uuid.uuid4()), "type": "access"},
+        -1,
+    ).token
+    with pytest.raises(InvalidCredentialsError):
+        await UserService(db).get_current_user(token)
+
+
+async def test_get_current_user_rejects_bad_token(db):
+    with pytest.raises(InvalidCredentialsError):
+        await UserService(db).get_current_user("not-a-jwt")

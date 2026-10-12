@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
@@ -9,7 +9,6 @@ from sqlalchemy import (
     ForeignKeyConstraint,
     Text,
     Uuid,
-    func,
     text,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -53,10 +52,10 @@ class AuthSession(Base):
     profile_id: Mapped[uuid.UUID] = mapped_column(Uuid, index=True)
     refresh_token: Mapped[str] = mapped_column(Text, unique=True)
     first_token_assign_timestamp: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
+        DateTime(timezone=True), server_default=datetime.now(timezone.utc)
     )
     latest_token_assign_timestamp: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
+        DateTime(timezone=True), server_default=datetime.now(timezone.utc)
     )
     expires_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True)

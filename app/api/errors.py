@@ -15,6 +15,8 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app.core.security import InvalidCredentialsError
+
 logger = logging.getLogger(__name__)
 
 NOT_NULL_VIOLATION = "23502"
@@ -65,6 +67,12 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException) 
     return response
 
 
+async def invalid_credentials_handler(request: Request, exc: InvalidCredentialsError) -> JSONResponse:
+    response = _error(401, "invalid_credentials", str(exc) or "Invalid credentials")
+    response.headers["WWW-Authenticate"] = "Bearer"
+    return response
+
+
 def _db_error_info(exc: IntegrityError) -> tuple[str | None, str | None]:
     """Return (sqlstate, constraint_name) from the underlying asyncpg error, if available."""
     orig = exc.orig
@@ -103,4 +111,5 @@ def register_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(RequestValidationError, request_validation_handler)
     app.add_exception_handler(StarletteHTTPException, http_exception_handler)
     app.add_exception_handler(IntegrityError, integrity_error_handler)
+    app.add_exception_handler(InvalidCredentialsError, invalid_credentials_handler)
     app.add_exception_handler(Exception, unhandled_exception_handler)
