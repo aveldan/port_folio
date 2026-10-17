@@ -1,6 +1,6 @@
 """Database tests for the AuthSession model."""
 
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 
 import pytest
@@ -9,6 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.db.models import AuthProvider, AuthSession, Profile, User
+
+EXPIRES_AT = datetime.now(timezone.utc) + timedelta(days=30)
 
 pytestmark = pytest.mark.anyio
 
@@ -22,8 +24,8 @@ async def people(db: AsyncSession) -> SimpleNamespace:
     b_pwd = Profile(user=b, identifier="bob", secret="$argon2id$fake-b")
     db.add_all([a, b, a_pwd, a_google, b_pwd])
     await db.flush()
-    laptop = AuthSession(user_id=a.user_id, profile_id=a_pwd.profile_id, refresh_token="hash-laptop")
-    phone = AuthSession(user_id=a.user_id, profile_id=a_google.profile_id, refresh_token="hash-phone")
+    laptop = AuthSession(user_id=a.user_id, profile_id=a_pwd.profile_id, refresh_token="hash-laptop", expires_at=EXPIRES_AT)
+    phone = AuthSession(user_id=a.user_id, profile_id=a_google.profile_id, refresh_token="hash-phone", expires_at=EXPIRES_AT)
     db.add_all([laptop, phone])
     await db.flush()
     return SimpleNamespace(
@@ -73,7 +75,8 @@ async def test_profile_of_another_user_is_rejected(db, people, rejected_by):
     async with rejected_by("fk_folio_sessions_profile_id_folio_profiles"):
         db.add(
             AuthSession(
-                user_id=people.a.user_id, profile_id=people.b_pwd.profile_id, refresh_token="hash-x"
+                user_id=people.a.user_id, profile_id=people.b_pwd.profile_id, refresh_token="hash-x",
+                expires_at=EXPIRES_AT,
             )
         )
 
@@ -85,7 +88,8 @@ async def test_refresh_token_cannot_be_reused(db, people, rejected_by):
     async with rejected_by("uq_folio_sessions_refresh_token"):
         db.add(
             AuthSession(
-                user_id=people.b.user_id, profile_id=people.b_pwd.profile_id, refresh_token="hash-laptop"
+                user_id=people.b.user_id, profile_id=people.b_pwd.profile_id, refresh_token="hash-laptop",
+                expires_at=EXPIRES_AT,
             )
         )
 

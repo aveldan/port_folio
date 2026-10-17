@@ -8,6 +8,7 @@ from fastapi import FastAPI, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.errors import register_exception_handlers
+from app.core.security import InvalidCredentialsError
 from app.db.models import User
 from app.schemas.requestDTOs.user import UserCreateRequest
 
@@ -50,6 +51,10 @@ def client(make_client):
     @app.get("/boom")
     async def boom():
         raise RuntimeError("secret internal detail")
+
+    @app.get("/me")
+    async def me():
+        raise InvalidCredentialsError()
 
     return make_client(app)
 
@@ -153,3 +158,14 @@ async def test_db_check_constraint_returns_422(db_client):
         resp = await db_client.post("/raw-users", json={"full_name": "A", "birth_date": "2999-01-01"})
     assert resp.status_code == 422
     assert resp.json()["details"] == [{"field": "birth_date", "message": "birth_date cannot be in the future"}]
+
+
+# Authentication
+
+
+async def test_invalid_credentials_return_401_with_bearer_challenge(client):
+    async with client:
+        resp = await client.get("/me")
+    assert resp.status_code == 401
+    assert resp.headers["WWW-Authenticate"] == "Bearer"
+    assert resp.json() == {"code": "invalid_credentials", "message": "Invalid credentials", "details": []}

@@ -78,13 +78,37 @@ erDiagram
 - **Redis** for caching and pub/sub
 - **aiohttp** for the WebSocket price feed client
 
+## Running locally
+
+Copy your settings into `.env` (`DATABASE_URL`, `REDIS_URL`, `JWT_SECRET_KEY`) and start the API:
+
+```bash
+poetry run uvicorn app.main:app --reload
+```
+
+With `RUN_MIGRATIONS_ON_STARTUP=true` in `.env`, the server runs `alembic upgrade head` when it starts, so an empty database gets every table. It is off by default; anywhere else, run migrations as a separate step.
+
+With `DROP_DB_ON_SHUTDOWN=true`, the server runs `alembic downgrade base` when it stops, dropping every table and all its data. With `--reload` that also happens on every reload, so each saved file starts you on an empty database.
+
+### Database migrations
+
+Migrations live in `migrations/versions/`. After changing a model:
+
+```bash
+poetry run alembic revision --autogenerate -m "describe the change"   # then read the generated file
+poetry run alembic upgrade head                                     # or just restart the server
+poetry run alembic check                                            # fails if models and database differ
+```
+
+Autogenerate writes an extra `CHECK` constraint for each `Enum(create_constraint=True)` column, which collides with the one the enum creates itself. Delete those lines from the generated file.
+
 ## Project status
 
 | Part | Status |
 |---|---|
 | Database models | Users, profiles, shared accounts, asset types, assets with market prices, transactions and holdings are done, with tests. |
-| Database migrations | Not set up yet. |
+| Database migrations | Alembic, with the initial schema. Runs on startup locally. |
 | Holding recalculation | Not started. Nothing updates a holding when a transaction is saved yet. |
 | Price ingestion worker | Not started. |
 | Redis caching and pub/sub | Not started. |
-| FastAPI endpoints | Not started. |
+| FastAPI endpoints | `POST /portfolio/v1/user` creates a user. |
