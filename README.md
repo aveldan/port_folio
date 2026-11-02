@@ -109,6 +109,6 @@ Autogenerate writes an extra `CHECK` constraint for each `Enum(create_constraint
 | Database models | Users, profiles, shared accounts, asset types, assets with market prices, transactions and holdings are done, with tests. |
 | Database migrations | Alembic, with the initial schema. Runs on startup locally. |
 | Holding recalculation | Not started. Nothing updates a holding when a transaction is saved yet. |
-| Price ingestion worker | Not started. |
-| Redis caching and pub/sub | Not started. |
+| Price ingestion worker | async ingestion |
+| Redis caching and pub/sub | done |
 | FastAPI endpoints | `POST /portfolio/v1/user` creates a user. |
